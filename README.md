@@ -9,12 +9,12 @@ Signal is maybe replaced by another signal in a higher VSS version. This program
 
 ### 1.2. Default options
 * `cargo run`: run app with default options
-    * `--signal`: `signals/signals_v3.0.json`
+    * `--signals`: `signals/signals_v3.0.json`
     * `--vss`: `vss-core/vss_release_4.0.json`
     * `--num`: `5`
 
 ### 1.3. Full options
-* `cargo run -- --signal <path-2-signal> --vss <path-2-vss> --num <num-result>`
+* `cargo run -- --signals <path-2-signal> --vss <path-2-vss> --num <num-result>`
 * Or: `cargo run -- -s <path-2-signal> -v <path-2-vss> -n <num-result>`
     > All options are optional
 
