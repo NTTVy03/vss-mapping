@@ -1,123 +1,72 @@
-use serde::Deserialize;
-use serde_json::Value;
-use std::cmp::Reverse;
-use std::fs::File;
-use std::io::BufReader;
+#![allow(warnings)]
 
-const JSON_V3: &str = "input/vss_release_4.0.json";
-const JSON_V4: &str = "input/vss_release_4.0.json";
+mod constants;
+mod signals_parser;
+mod structs;
+mod vss_matcher;
+mod vss_parser;
 
-#[derive(Deserialize, Debug)]
-struct SignalData {
-    name: String,
-    signal: String,
-    uuid: String,
-}
-
-#[derive(Debug)]
-struct MapSignal {
-    signal: String,
-    counter: u8,
-}
-
-fn parse_uuid(sub_object: &serde_json::Map<String, Value>) -> Option<String> {
-    sub_object
-        .get("uuid")
-        .and_then(|v| v.as_str())
-        .map(String::from)
-}
-
-fn parse_children<'a>(sub_object: &'a serde_json::Map<String, Value>) -> Option<&'a Value> {
-    sub_object.get("children")
-}
-
-fn json_to_signals(json: &Value, signals: &mut Vec<SignalData>, parent_signal: &str) {
-    if let Value::Object(object) = json {
-        for (key, sub_json) in object {
-            if let Value::Object(sub_object) = sub_json {
-                let signal = if parent_signal.is_empty() {
-                    key.clone()
-                } else {
-                    format!("{}.{}", parent_signal, key)
-                };
-
-                if let Some(uuid) = parse_uuid(sub_object) {
-                    signals.push(SignalData {
-                        name: key.clone(),
-                        signal: signal.clone(),
-                        uuid,
-                    });
-
-                    if let Some(children) = parse_children(sub_object) {
-                        json_to_signals(children, signals, &signal);
-                    }
-                }
-            }
-        }
-
-    }
-}
-
-fn read_signals(path: &str) -> Vec<SignalData> {
-    let file = File::open(path).expect("Failed to open file {path}");
-    let reader = BufReader::new(file);
-
-    let json: Value = serde_json::from_reader(reader).expect("Failed to parse file {path}");
-
-    let mut signals = Vec::new();
-    json_to_signals(&json, &mut signals, "");
-
-    // signals.sort_by_key(|s| s.signal.clone());
-
-    signals
-}
-
-fn calulate_match_pattern(s1: &String, s2: &String) -> u8 {
-    let counter_left = s1
-        .chars()
-        .zip(s2.chars())
-        .take_while(|(c1, c2)| c1 == c2)
-        .count();
-    let counter_right = s1
-        .chars()
-        .rev()
-        .zip(s2.chars().rev())
-        .take_while(|(c1, c2)| c1 == c2)
-        .count();
-
-    let mut counter = (counter_left + counter_right).try_into().unwrap();
-
-    if counter > s1.len().try_into().unwrap() {
-        counter = counter / 2;
-    }
-
-    counter
-}
+use clap::{Arg, Command};
+use constants::*;
 
 fn main() {
-    let signals_v4 = read_signals(JSON_V4);
-    let signals_v3 = vec!["Vehicle.Cabin.Door.Row1.Left.IsLocked".to_string()];
-    let num_result = 5;
+    let matches = Command::new(CLI_NAME)
+        .version(VERSION)
+        .author(AUTHOR)
+        .about(ABOUT)
+        .arg(
+            Arg::new(ARG_SIGNALS)
+                .short(ARG_SIGNALS_SHORT)
+                .long(ARG_SIGNALS_LONG)
+                .value_name(ARG_SIGNALS_VALUE_NAME)
+                .help(ARG_SIGNALS_HELP)
+                .default_value(ARG_SIGNALS_DEFAULT),
+        )
+        .arg(
+            Arg::new(ARG_VSS)
+                .short(ARG_VSS_SHORT)
+                .long(ARG_VSS_LONG)
+                .value_name(ARG_VSS_VALUE_NAME)
+                .help(ARG_VSS_HELP)
+                .default_value(ARG_VSS_DEFAULT),
+        )
+        .arg(
+            Arg::new(ARG_NUM)
+                .short(ARG_NUM_SHORT)
+                .long(ARG_NUM_LONG)
+                .value_name(ARG_NUM_VALUE_NAME)
+                .help(ARG_NUM_HELP)
+                .default_value(ARG_NUM_DEFAULT),
+        )
+        .get_matches();
 
-    for signal_v3 in signals_v3 {
-        println!("\n-----------------");
-        println!("Signal v3 = {}\n", signal_v3);
+    let signals_file = matches
+        .get_one::<String>(ARG_SIGNALS)
+        .expect("Can not parse signal file");
+    let vss_file = matches
+        .get_one::<String>(ARG_VSS)
+        .expect("Can not parse vss file");
+    let num: usize = matches
+        .get_one::<String>(ARG_NUM)
+        .unwrap()
+        .parse()
+        .expect("Can not parse num");
 
-        let mut map_signal = vec![];
-        
-        for signal_v4 in &signals_v4 {
-            let counter = calulate_match_pattern(&signal_v3, &signal_v4.signal);
-            
-            map_signal.push(MapSignal {
-                signal: signal_v4.signal.clone(),
-                counter,
-        })
-        }
+    println!("source signals: {}", signals_file);
+    println!("vss json: {}", vss_file);
+    println!("number of results: {}/signal", num);
 
-        map_signal.sort_by_key(|m| Reverse(m.counter));
+    let signals = signals_parser::read_signals(&signals_file);
+    let collection = vss_parser::read_signals(&vss_file);
 
-        for i in 0..num_result {
-            println!("{:?} - {}", map_signal[i].signal, map_signal[i].counter);
+    let results = vss_matcher::vss_match(signals, collection);
+
+    for (signal, result) in results {
+        println!("\n-------------");
+        println!("signal: {} (length: {})\n", signal, signal.len());
+
+        for i in 0..num {
+            println!("{:?}", result.get(i));
         }
     }
 }
