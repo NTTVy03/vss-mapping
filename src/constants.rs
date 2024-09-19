@@ -2,13 +2,7 @@ pub const CLI_NAME: &str = "VSS mapping";
 pub const VERSION: &str = "1.0";
 pub const AUTHOR: &str = "NTTVy03";
 pub const ABOUT: &str = "A simple CLI to find top matched signals in VSS JSON file";
-
-// pub const ARG_SIGNALS: &str = "signals";
-// pub const ARG_SIGNALS_SHORT: char = 's';
-// pub const ARG_SIGNALS_LONG: &str = "signals";
-// pub const ARG_SIGNALS_VALUE_NAME: &str = "JSON-FILE";
-// pub const ARG_SIGNALS_DEFAULT: &str = "signals/signals_v3.0.json";
-// pub const ARG_SIGNALS_HELP: &str = "The file contains signals that you have already had";
+pub const HISTORY_SIZE: usize = 100;
 
 pub const ARG_VSS: &str = "vss";
 pub const ARG_VSS_SHORT: char = 'v';
