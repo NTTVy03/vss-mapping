@@ -2,7 +2,7 @@
 
 Signal is maybe replaced by another signal in a higher VSS version. This program tries to find the top most related signals in other VSS version.
 
-## 1. How to run
+## 1. How to build for development
 
 ### 1.1. Help
 * `cargo run -- -h`: introduction and options to run
@@ -32,3 +32,17 @@ This CLI provides 4 types of command:
     * Common left pattern: `"Vehicle.Body.` --> 13
     * Common right pattern: `".IsOpen"` --> 7
     * Matching score: 13 + 7 = 20
+
+## 4. How to run the application (with Docker)
+
+1. Built the image
+
+```
+docker build -t vss-mapping .
+```
+
+2. Run the container
+
+```
+docker run -it vss-mapping
+```
