@@ -9,16 +9,22 @@ Signal is maybe replaced by another signal in a higher VSS version. This program
 
 ### 1.2. Default options
 * `cargo run`: run app with default options
-    * `--signal`: `signals/signals_v3.0.json`
     * `--vss`: `vss-core/vss_release_4.0.json`
     * `--num`: `5`
 
 ### 1.3. Full options
-* `cargo run -- --signal <path-2-signal> --vss <path-2-vss> --num <num-result>`
-* Or: `cargo run -- -s <path-2-signal> -v <path-2-vss> -n <num-result>`
+* `cargo run -- --vss <path-2-vss> --num <num-result>`
+* Or: `cargo run -- -v <path-2-vss> -n <num-result>`
     > All options are optional
 
-## 2. Implementation
+## 2. Interact with CLI
+This CLI provides 4 types of command:
+* `vss <path-2-VSS-file>`: set vss-file
+* `num <usize value>`: set number of results/signal
+* `run <path-2-signals-file>`: find top related signals in VSS file of each signal in signals file
+* `exit`: quit cli
+
+## 3. Implementation
 * Matching algorithm: count number of common characters on the left and right between 2 signals
 * Example:
     * `s1 = "Vehicle.Body.Hood.IsOpen"`
